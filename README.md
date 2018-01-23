@@ -18,4 +18,4 @@ This project uses Python and D3.js to analyze and visualize China National Air Q
 
 # Demo Video 
 
-[![Demo Video](./demo.png)](http://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_HERE)
+[![Demo Video](./demo.png)](https://youtu.be/haSWkDD6Dkk)
