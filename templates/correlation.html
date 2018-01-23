@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="UTF-8">
+  	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+  	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<title>CSE564 Chinair Analysis</title>
+	<!--
+	<script type="text/javascript" src="d3-min.js"></script>
+	-->
+	<style type="text/css">
+	body{
+		background-color: rgb(37,40,48);
+		color: rgb(244,244,244);
+	}
+	.AQI_num{
+		color: rgb(28,128,221);
+		color: rgb(288,216,54);
+	}
+	.scrollable-menu {
+   		height: auto;
+    	max-height: 200px;
+    	overflow-x: hidden;
+	}
+	.menu_text{
+		color:lightgrey;
+	}
+	.menu_text:hover{
+		color:rgb(222,222,222);
+	}
+
+	svg {
+	  font: 10px sans-serif;
+	}
+
+	.background path {
+	  fill: none;
+	  stroke: #ddd;
+	  shape-rendering: crispEdges;
+	}
+
+	.foreground path {
+	  fill: none;
+	  stroke: steelblue;
+	}
+
+	.brush .extent {
+	  fill-opacity: .3;
+	  stroke: #fff;
+	  shape-rendering: crispEdges;
+	}
+
+	.axis line,
+	.axis path {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+
+	.axis text {
+	  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+	  cursor: move;
+	}
+	</style>
+</head>
+<body>
+
+<script src="https://code.highcharts.com/maps/highmaps.js"></script>
+<script src="https://code.highcharts.com/maps/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/mapdata/countries/cn/cn-all.js"></script>
+
+
+<div  style="width: 1300px; height: 740px; margin: auto; border: 1px solid lightgrey; margin-top: 10px;margin-bottom: 10px;">
+	<!--Menu-->
+	<div style="width: 200px; height: 200px; float: left;border-bottom: 1px solid rgb(67,72,97); 
+	border-top: 1px solid rgb(67,72,97); margin-top: 20px; margin-left: 10px;">
+		<div class="btn-group" data-toggle="buttons" style="margin-left: 50px; margin-top: 30px;">
+		  <br><br> 
+		  <label class="btn btn-primary">
+		    <input type="radio" name="options" id="option2" autocomplete="off">
+		    <span class="menu_text" onclick="location.href='map.html'"> China Map</span>
+		  </label><br><br> 
+		  <label class="btn btn-primary">
+		    <input type="radio" name="options" id="option3" autocomplete="off"> 
+		    <span class="menu_text" onclick="location.href='correlation.html'"> Correlation</span>
+		  </label><br><br> 
+		</div>
+	</div>
+	<!--Menu End-->
+
+	<div style="width: 1000px; height: 690px; float: left;border: 1px solid rgb(67,72,97); margin-top: 20px; margin-left: 40px;"> 
+	<div class="container">
+		<h1 style="margin-left: 10px; " id="air_quality_text">Parallel Coordinates</h1> 
+	</div>
+	<div id="main_div">
+		<br style="clear: both;">
+	 	<svg id="main_svg" style="width: 970px; height: 550px; border-top: 1px solid rgb(67,72,97); margin-top: 20px; margin-left: 10px; border: 1px solid black;background-color: white;"></svg>
+ 	</div>
+</div>
+
+
+<div id="json_prep"></div>
+
+
+
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript">
+
+	//global vars
+	var cur_city_code = "1001A";
+	var prepared_data = [];
+	var data_attributes =[];
+
+	var observation_code = [];
+	var data_type_attributes = ["AQI","PM25","PM10","SO2","NO2","O3","CO"];
+	var data_type_MAX =[0,0,0,0,0,0,0];
+	var data_type_MIN =[0,0,0,0,0,0,0];
+	var data_type_average =[0,0,0,0,0,0,0];
+	var PM25_24h =0;	
+	var PM10_24h =0;
+	var SO2_24h =0;
+	var NO2_24h =0;
+	var O3_24h =0;
+	var CO_24h =0;
+
+	/*
+	var PM25_24h_MAX =0;	
+	var PM10_24h_MAX =0;
+	var SO2_24h_MAX =0;
+	var NO2_24h_MAX =0;
+	var O3_24h_MAX =0;
+	var CO_24h_MAX =0;
+	var PM25_24h_MIN =0;	
+	var PM10_24h_MIN =0;
+	var SO2_24h_MIN =0;
+	var NO2_24h_MIN =0;
+	var O3_24h_MIN =0;
+	var CO_24h_MIN =0;
+	*/
+	var AQIs = [];
+	var AQI_24h = {type:"AQI_24h",hour:23,date:20170320};
+	
+	d3.json("/chinair.json", function(error,data){
+		if(error) throw error; 
+		console.log(data.length);
+		data.forEach(function(d){ 
+			//fill up missing data 
+			var temp_value = 0;
+			var temp_count = 0;
+			for(var attribute in d){
+				if (d.hasOwnProperty(attribute)) {
+      				if(d[attribute]!=""&&attribute!="type"&&attribute!="date"&&attribute!="hour"){
+						//add attributes
+						data_attributes.push(attribute);
+      					temp_value += d[attribute];
+      					temp_count++; 
+      				}
+   				}
+			}
+			//init as average  
+			temp_value = temp_value / temp_count;
+			for(var attribute in d){
+				if (d.hasOwnProperty(attribute)) {
+      				if(d[attribute]=="" ){
+      					var curAttr = parseInt(attribute.split('A')[0]);  
+      					while(d[curAttr.toString()+'A']==""){
+      						if(curAttr<1001){
+      							d[attribute] = temp_value;
+      							break;
+      						}
+      						curAttr--;
+      					}
+      					if(!curAttr<1001){d[attribute]=d[curAttr.toString()+"A"];}
+      				}
+   				} 
+			}
+			//get AQIs for each hour
+			if(d.type==="AQI"){			
+				AQIs.push(d);
+			}
+			//get daily average
+			if(parseInt(d.hour)==23){		
+				if(d.type==="CO_24h"){
+					CO_24h=(d);
+				}
+				if(d.type==="PM2.5_24h"){
+					PM25_24h=(d);
+				}
+				if(d.type==="PM10_24h"){
+					PM10_24h=(d);
+				}
+				if(d.type==="SO2_24h"){
+					SO2_24h=(d);
+				}
+				if(d.type==="NO2_24h"){
+					NO2_24h=(d);
+				}
+				if(d.type==="O3_24h"){
+					O3_24h=(d);
+				}
+			}
+		});
+
+		//calculate AQI_24h
+		var temp_AQI_24h = AQIs[0];
+		for (var i = 1; i < AQIs.length; i++) {
+			var d = AQIs[i];
+			for(var attribute in d){
+				temp_AQI_24h[attribute]+=d[attribute];
+			}
+		}
+		for(var attribute in temp_AQI_24h){
+			if(attribute!="type"&&attribute!="date"&&attribute!="hour"){ 
+				var curAttr = parseInt(attribute.split('A')[0]); 
+				if(isNaN(temp_AQI_24h[attribute])){
+					while(isNaN(parseInt(temp_AQI_24h[curAttr.toString()+'A']))){
+						if(!isNaN(parseInt(temp_AQI_24h[curAttr.toString()+'A'])))
+							break;
+						curAttr--;
+					} 
+					temp_AQI_24h[attribute]=temp_AQI_24h[(curAttr).toString()+'A'];
+				}		 
+      		}
+			AQI_24h[attribute]=parseInt((temp_AQI_24h[attribute]/24*1.0));
+		}
+		AQI_24h.type = "AQI_24h";
+		AQI_24h.hour = 23;
+		AQI_24h.date = 20170320;
+		$.each(data_attributes, function(i, el){
+		    if($.inArray(el, observation_code) === -1) observation_code.push(el);
+		});
+		observation_code.sort();
+
+
+		for (var i = 0; i<observation_code.length;i++) {
+			var entry = [];
+			var cur_attribute = observation_code[i];
+			entry.push(AQI_24h[cur_attribute]); 
+			entry.push(PM25_24h[cur_attribute]);
+			entry.push(PM10_24h[cur_attribute]);
+			entry.push(SO2_24h[cur_attribute]);
+			entry.push(NO2_24h[cur_attribute]);
+			entry.push(O3_24h[cur_attribute]);
+			entry.push(CO_24h[cur_attribute]);
+			prepared_data.push(entry);
+		}
+
+		//average and max min'
+		
+		data_type_MAX=[prepared_data[0][0],prepared_data[0][1],prepared_data[0][2],
+							prepared_data[0][3],prepared_data[0][4],prepared_data[0][5],
+							prepared_data[0][6]];
+		data_type_MIN=[prepared_data[0][0],prepared_data[0][1],prepared_data[0][2],
+							prepared_data[0][3],prepared_data[0][4],prepared_data[0][5],
+							prepared_data[0][6]];
+		for(var i =0; i< prepared_data.length;i++){
+			var entry = prepared_data[i];
+			for (var k = 0; k <data_type_attributes.length; k++) {
+				data_type_average[k] +=entry[k];
+				if(entry[k]<data_type_MIN[k]){
+					data_type_MIN[k] =entry[k];
+				}
+				if(entry[k]>data_type_MAX[k]){
+					if(entry[k]>=1200) entry[k] =120;
+					data_type_MAX[k] =entry[k];
+				}
+			}
+		}
+		for (var i = data_type_average.length - 1; i >= 0; i--) {
+			data_type_average[i] = (data_type_average[i]/ observation_code.length).toFixed(1);
+		}
+		
+
+		
+		console.log(AQI_24h);	
+		console.log(PM25_24h);		
+		console.log(PM10_24h);		
+		console.log(SO2_24h);		
+		console.log(NO2_24h);		
+		console.log(O3_24h);		
+		console.log(CO_24h);	
+		console.log(observation_code.length);
+		console.log("haha "+prepared_data[0]);
+		console.log("average "+data_type_average);
+		console.log("MIN "+data_type_MIN);
+		console.log("mAX "+data_type_MAX);
+		
+	
+
+		//init scene
+		var margin = {top: 30, right: 10, bottom: 10, left: 10},
+	    width = 960 - margin.left - margin.right,
+	    height = 500 - margin.top - margin.bottom;
+
+		var x = d3.scale.ordinal().rangePoints([0, width], 1),
+		    y = {},
+		    dragging = {};
+
+		var line = d3.svg.line(),
+		    axis = d3.svg.axis().orient("left"),
+		    background,
+		    foreground;
+
+		var svg = d3.select("#main_svg")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		  .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		    
+		
+
+		/*
+		var stringtoprint = "AQI,PM25,PM10,SO2,NO2,O3,CO<br>";
+		for(var i = 0; i<prepared_data.length;i+=4){
+			stringtoprint+= prepared_data[i]+"<br>"
+		}
+
+		$("#json_prep").html(stringtoprint);
+		*/
+		d3.csv("parallel.csv", function(error, chinair) {
+
+		 console.log(chinair[0]);
+		 // Extract the list of dimensions and create a scale for each.
+		 x.domain(dimensions = d3.keys(chinair[0]).filter(function(d) {
+		    return d != "name" && (y[d] = d3.scale.linear()
+		        .domain(d3.extent(chinair, function(p) { return +p[d]; }))
+		        .range([height, 0]));
+		  }));
+		 // Add grey background lines for context.
+  background = svg.append("g")
+      .attr("class", "background")
+    .selectAll("path")
+      .data(chinair)
+    .enter().append("path")
+      .attr("d", path);
+
+  // Add blue foreground lines for focus.
+  foreground = svg.append("g")
+      .attr("class", "foreground")
+    .selectAll("path")
+      .data(chinair)
+    .enter().append("path")
+      .attr("d", path);
+
+  // Add a group element for each dimension.
+  var g = svg.selectAll(".dimension")
+      .data(dimensions)
+    .enter().append("g")
+      .attr("class", "dimension")
+      .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+      .call(d3.behavior.drag()
+        .origin(function(d) { return {x: x(d)}; })
+        .on("dragstart", function(d) {
+          dragging[d] = x(d);
+          background.attr("visibility", "hidden");
+        })
+        .on("drag", function(d) {
+          dragging[d] = Math.min(width, Math.max(0, d3.event.x));
+          foreground.attr("d", path);
+          dimensions.sort(function(a, b) { return position(a) - position(b); });
+          x.domain(dimensions);
+          g.attr("transform", function(d) { return "translate(" + position(d) + ")"; })
+        })
+        .on("dragend", function(d) {
+          delete dragging[d];
+          transition(d3.select(this)).attr("transform", "translate(" + x(d) + ")");
+          transition(foreground).attr("d", path);
+          background
+              .attr("d", path)
+            .transition()
+              .delay(500)
+              .duration(0)
+              .attr("visibility", null);
+        }));
+
+  // Add an axis and title.
+  g.append("g")
+      .attr("class", "axis")
+      .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
+    .append("text")
+      .style("text-anchor", "middle")
+      .attr("y", -9)
+      .text(function(d) { return d; });
+
+  // Add and store a brush for each axis.
+  g.append("g")
+      .attr("class", "brush")
+      .each(function(d) {
+        d3.select(this).call(y[d].brush = d3.svg.brush().y(y[d]).on("brushstart", brushstart).on("brush", brush));
+      })
+    .selectAll("rect")
+      .attr("x", -8)
+      .attr("width", 16);
+		});
+		//funtions 
+	function position(d) {
+		var v = dragging[d];
+		return v == null ? x(d) : v;
+	}
+
+	function transition(g) {
+	  return g.transition().duration(500);
+	}
+
+	// Returns the path for a given data point.
+	function path(d) {
+	  return line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
+	}
+
+	function brushstart() {
+	  d3.event.sourceEvent.stopPropagation();
+	}
+
+	// Handles a brush event, toggling the display of foreground lines.
+	function brush() {
+	  var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
+	      extents = actives.map(function(p) { return y[p].brush.extent(); });
+	  foreground.style("display", function(d) {
+	    return actives.every(function(p, i) {
+	      return extents[i][0] <= d[p] && d[p] <= extents[i][1];
+	    }) ? null : "none";
+	  });
+	}
+	});
+	
+
+	
+
+	
+</script>
+
+</body>
+</html>
