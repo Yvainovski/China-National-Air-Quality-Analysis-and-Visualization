@@ -13,7 +13,7 @@ productivity may vary over time, the geographical pattern air pollution may also
 latest analysis on the most recent air pollution pattern is necessary. The analytical results may
 help the authorities adjust the current regulations or introduce new targeted regulations in time.
 
-This project uses Python and D3.js to analyze and visualize China National Air Quality Dataset of March 2017. Check [final_report.pdf](./final_report.pdf "Project Report PDF")to see more details
+This project uses Python and D3.js to analyze and visualize China National Air Quality Dataset of March 2017. Check [final_report.pdf](./final_report.pdf "Project Report PDF") to see more details
 
 
 # Demo Video 
